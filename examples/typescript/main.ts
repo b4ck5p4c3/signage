@@ -16,21 +16,33 @@ client.on('connect', () => {
     console.info('Connected to mqtt');
 
     const protocol = new Protocol();
-    
-    client.publish('bus/devices/openspace-signage/message', Buffer.from(protocol.serializeSetMessage({
+
+    client.publish('bus/devices/openspace-signage/background', Buffer.from(protocol.serializeSetBackgroundMessage({
         message: {
-            data: convertToCp1251("Test message, тестовое сообщение"),
+            data: convertToCp1251("Test background message, тестовое фоновое сообщение"),
             brightness: 4,
             effectType: EffectType.SCROLL,
             scrollEffect: {
                 direction: Direction.RIGHT_TO_LEFT,
                 speed: 50
             }
-        },
-        duration: 20000,
-        priority: 1
+        }
     })), () => {
-        client.end();
+        client.publish('bus/devices/openspace-signage/message', Buffer.from(protocol.serializeSetMessage({
+            message: {
+                data: convertToCp1251("Test message, тестовое сообщение"),
+                brightness: 4,
+                effectType: EffectType.SCROLL,
+                scrollEffect: {
+                    direction: Direction.RIGHT_TO_LEFT,
+                    speed: 50
+                }
+            },
+            duration: 10000,
+            priority: 1
+        })), () => {
+            client.end();
+        });
     });
 });
 client.on('error', e => {
