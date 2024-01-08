@@ -1,6 +1,6 @@
 # signage
 
-Firmware for B4CKSP4CE signage in openspace based on ESP32(S2) and ~~some voodoo magic~~ shift registers
+Firmware for B4CKSP4CE signage in openspace based on ESP32 and ~~some voodoo magic~~ shift registers
 
 To build the project you also require to create `src/secrets.h` with defines for:
 ```c
