@@ -2,3 +2,5 @@
 .vscode/*
 !.vscode/extensions.json
 src/secrets.h
+examples/typescript/.env
+examples/typescript/node_modules
