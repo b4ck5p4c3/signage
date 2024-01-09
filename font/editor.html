@@ -1,0 +1,211 @@
+<html>
+    <head>
+        <style>
+            body, html {
+                margin: 0;
+                padding: 0;
+                font-family: monospace;
+            }
+
+            .font-char-editor {
+                display: flex;
+                flex-direction: column;
+                padding: 15px;
+                gap: 10px;
+            }
+
+            .font-char {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .font-row {
+                display: flex;
+                flex-direction: row;
+            }
+
+            .font-cell {
+                width: 15px;
+                height: 15px;
+                border: 1px solid black;
+                cursor: pointer;
+            }
+
+            .font-cell-active {
+                background-color: red;
+            }
+
+            .font-editor {
+                display: grid;
+                grid-template-columns: repeat(8, 1fr);
+            }
+
+            .menu {
+                width: 100%;
+                min-height: 100px;
+                border-bottom: 3px solid black;
+            }
+
+            input[type=number]::-webkit-inner-spin-button, 
+            input[type=number]::-webkit-outer-spin-button {  
+                opacity: 1;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="menu">
+            <button id="save">Save to file</button>
+            <button id="load">Load from file</button>
+        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const body = document.body;
+
+                
+                document.addEventListener('startdrag', e => {
+                    e.preventDefault();
+                });
+                document.addEventListener('enddrag', e => {
+                    e.preventDefault();
+                });
+
+                document.getElementById('save').addEventListener('click', () => {
+                    var element = document.createElement('a');
+                    element.setAttribute('href', 'data:text/json;charset=utf-8,' + encodeURIComponent(encodeData()));
+                    element.setAttribute('download', 'font.json');
+
+                    element.style.display = 'none';
+                    body.appendChild(element);
+
+                    element.click();
+
+                    body.removeChild(element);
+                });
+
+                document.getElementById('load').addEventListener('click', () => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+
+                    input.addEventListener('change', e => { 
+                        const file = e.target.files[0]; 
+                        console.info(file);
+                        var reader = new FileReader();
+                        reader.readAsText(file,'UTF-8');
+
+                        reader.addEventListener('load', re => {
+                            const content = re.target.result;
+                            console.info(content);
+                            localStorage.setItem('data', content);
+                            location.reload();
+                        });
+                    });
+
+                    input.click();
+                });
+
+                const charEditor = document.createElement('div');
+                charEditor.className = 'font-editor';
+                
+                let charData = [...Array(256)].map(item => [...Array(12)].map(item => [...Array(8)].map(item => false)));
+                let widths = [...Array(256)].map(item => 0);
+
+                if (localStorage.getItem('data')) {
+                    try {
+                        const data = JSON.parse(localStorage.getItem('data'));
+                        charData = data.charData;
+                        widths = data.widths;
+                    } catch {
+                        alert('failed to load');
+                        charData = [...Array(256)].map(item => [...Array(12)].map(item => [...Array(8)].map(item => false)));
+                        widths = [...Array(256)].map(item => 0);
+                        localStorage.setItem('data', encodeData());
+                    }
+                }
+
+                function createFontChar(dataChangedCallback, initialData) {
+                    const data = initialData ? initialData : [...Array(12)].map(item => [...Array(8)].map(item => false));
+                    const main = document.createElement('div');
+                    main.className = 'font-char';
+                    const rows = [...Array(8)].map((item, rowIndex) => {
+                        const row = document.createElement('div');
+                        row.className = 'font-row';
+                        const cells = [...Array(12)].map((item, columnIndex) => {
+                            const cell = document.createElement('div');
+                            cell.className = data[columnIndex][rowIndex] ? 'font-cell font-cell-active' : 'font-cell';
+                            cell.addEventListener('mouseover', e => {
+                                if (e.buttons !== 1) {
+                                    return;
+                                }
+                                data[columnIndex][rowIndex] = window.currentBrush;
+                                cell.className = 'font-cell' + (data[columnIndex][rowIndex] ? ' font-cell-active' : '');
+                                if (dataChangedCallback) {
+                                    dataChangedCallback(data);
+                                }
+                            });
+                            cell.addEventListener('mousedown', e => {
+                                if (e.buttons !== 1) {
+                                    return;
+                                }
+                                data[columnIndex][rowIndex] = !data[columnIndex][rowIndex];
+                                window.currentBrush = data[columnIndex][rowIndex];
+                                cell.className = 'font-cell' + (data[columnIndex][rowIndex] ? ' font-cell-active' : '');
+                                if (dataChangedCallback) {
+                                    dataChangedCallback(data);
+                                }
+                            });
+                            return cell;
+                        });
+                        row.append(...cells);
+                        return row;
+                    });
+                    main.append(...rows);
+
+                    return main;
+                }
+
+                function createFontCharEditor(dataChangedCallback, initialData, charIndex, widthChangedCallback, initialWidth) {
+                    const main = document.createElement('div');
+                    main.className = 'font-char-editor';
+                    const charInfo = document.createElement('div');
+                    charInfo.innerText = `Char '${new TextDecoder('cp1251').decode(new Uint8Array([charIndex]))}' (0x${charIndex.toString(16).padStart(2, '0')})`;
+                    main.appendChild(charInfo);
+                    main.appendChild(createFontChar(dataChangedCallback, initialData));
+                    const widthEditor = document.createElement('input');
+                    widthEditor.setAttribute('type', 'number');
+                    widthEditor.setAttribute('min', '0');
+                    widthEditor.setAttribute('max', '12');
+                    widthEditor.value = initialWidth;
+                    widthEditor.addEventListener('change', () => {
+                        widthChangedCallback(widthEditor.value);
+                    })
+                    const widthLabel = document.createElement('div');
+                    widthLabel.innerText = 'Width: ';
+                    main.appendChild(widthLabel);
+                    main.appendChild(widthEditor);
+                    return main;
+                }
+
+                for (let i = 0; i < 256; i++) {
+                    const charIndex = i;
+                    charEditor.appendChild(createFontCharEditor(data => {
+                        console.info(`new data at ${charIndex}`);
+                        localStorage.setItem('data', encodeData());
+                    }, charData[charIndex], charIndex, value => {
+                        console.info(`width changed at ${charIndex} to ${value}`);
+                        widths[charIndex] = value;
+                        localStorage.setItem('data', encodeData());
+                    }, widths[charIndex]));
+                }
+
+                function encodeData() {
+                    return JSON.stringify({
+                        widths,
+                        charData
+                    }, undefined, 4);
+                }
+
+                body.appendChild(charEditor);
+            });
+        </script>
+    </body>
+</html>
