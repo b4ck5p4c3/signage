@@ -3,6 +3,7 @@
 #include "../renderer/message.h"
 #include "../utils/debug.h"
 
+#include <WiFi.h>
 #include <WiFiClientSecure.h>
 
 using namespace network;

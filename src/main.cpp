@@ -29,10 +29,12 @@ std::vector<uint8_t> StringToVector(const std::string& string) {
 
 void setup() {
   InitDebug();
+
+  DEBUG_PRINT_PREFIX("Starting\n");
   pinMode(POWER_RELAY_PIN, OUTPUT);
   digitalWrite(POWER_RELAY_PIN, LOW);
 
-  main_display->Start(160);
+  main_display->Start(120);
   if (!main_renderer->Start()) {
     DEBUG_PRINT_PREFIX("Failed to start renderer task\n");
     ESP.restart();

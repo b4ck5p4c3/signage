@@ -87,14 +87,11 @@
                     input.type = 'file';
 
                     input.addEventListener('change', e => { 
-                        const file = e.target.files[0]; 
-                        console.info(file);
+                        const file = e.target.files[0];
                         var reader = new FileReader();
                         reader.readAsText(file,'UTF-8');
 
                         reader.addEventListener('load', re => {
-                            const content = re.target.result;
-                            console.info(content);
                             localStorage.setItem('data', content);
                             location.reload();
                         });
@@ -113,7 +110,7 @@
                     try {
                         const data = JSON.parse(localStorage.getItem('data'));
                         charData = data.charData;
-                        widths = data.widths;
+                        widths = data.widths.map(item => parseInt(item));
                     } catch {
                         alert('failed to load');
                         charData = [...Array(256)].map(item => [...Array(12)].map(item => [...Array(8)].map(item => false)));
@@ -192,7 +189,7 @@
                         localStorage.setItem('data', encodeData());
                     }, charData[charIndex], charIndex, value => {
                         console.info(`width changed at ${charIndex} to ${value}`);
-                        widths[charIndex] = value;
+                        widths[charIndex] = parseInt(value);
                         localStorage.setItem('data', encodeData());
                     }, widths[charIndex]));
                 }

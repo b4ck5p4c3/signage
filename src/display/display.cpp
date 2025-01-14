@@ -44,11 +44,10 @@ void Display::Start(uint32_t refresh_rate) {
   pinMode(this->clk_pin_, OUTPUT);
   pinMode(this->data_pin_, OUTPUT);
   pinMode(this->latch_pin_, OUTPUT);
-  this->timer_ = timerBegin(0, 80, true);
+  this->timer_ = timerBegin(500000);
   current_display = this;
-  timerAttachInterrupt(this->timer_, DisplayRefreshFunction, true);
-  timerAlarmWrite(this->timer_, refresh_rate, true);
-  timerAlarmEnable(this->timer_);
+  timerAttachInterrupt(this->timer_, DisplayRefreshFunction);
+  timerAlarm(this->timer_, refresh_rate, true, 0);
 }
 
 Display::~Display() {
